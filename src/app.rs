@@ -2,12 +2,13 @@ use crate::audio::Recorder;
 use crate::clicks::{ClickRecorder, ClickSequence};
 use crate::config::Config;
 use crate::filler::remove_fillers;
+use crate::tunnel;
 use crate::screenshot;
 use crate::storage::{CaptureEntry, Session};
 use crate::voice_commands::{self, VoiceCommand};
 use eframe::egui;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use tokio::runtime::Runtime;
 
 pub struct NatusApp {
@@ -37,6 +38,12 @@ pub struct NatusApp {
     hangar_url: String,
     stt_base: String,
     chat_base: String,
+    ssh_enabled: bool,
+    ssh_host: String,
+    ssh_user: String,
+    ssh_local_port: String,
+    ssh_remote_port: String,
+    tunnel: tunnel::SshTunnel,
 }
 
 #[derive(PartialEq, Eq, Clone, Copy)]
@@ -48,6 +55,15 @@ impl NatusApp {
         let hangar_url = cfg.hangar_url.clone();
         let stt_base = cfg.stt_base_url.clone();
         let chat_base = cfg.chat_base_url.clone();
+        let ssh_enabled = cfg.ssh_tunnel_enabled;
+        let ssh_host = cfg.ssh_tunnel_host.clone();
+        let ssh_user = cfg.ssh_tunnel_user.clone();
+        let ssh_local_port = cfg.ssh_tunnel_local_port.to_string();
+        let ssh_remote_port = cfg.ssh_tunnel_remote_port.to_string();
+        let mut tunnel = tunnel::SshTunnel::new();
+        if ssh_enabled {
+            let _ = tunnel.start(&cfg);
+        }
         Self {
             cfg, rt, session: None, recorder: None, audio_path: None, recording: false,
             capturing_sequence: false, sequence_entries: vec![],
@@ -56,6 +72,7 @@ impl NatusApp {
             tab: Tab::Record, status: "Ready".into(), review_index: 0,
             transcript: String::new(), summary: String::new(),
             hangar_url, stt_base, chat_base,
+            ssh_enabled, ssh_host, ssh_user, ssh_local_port, ssh_remote_port, tunnel,
         }
     }
 }
@@ -318,10 +335,46 @@ impl NatusApp {
         ui.text_edit_singleline(&mut self.stt_base);
         ui.label("Chat base URL");
         ui.text_edit_singleline(&mut self.chat_base);
+        ui.separator();
+        ui.heading("SSH tunnel to Hangar (Tailscale)");
+        ui.checkbox(&mut self.ssh_enabled, "Enable SSH tunnel");
+        ui.label("SSH host");
+        ui.text_edit_singleline(&mut self.ssh_host);
+        ui.label("SSH user");
+        ui.text_edit_singleline(&mut self.ssh_user);
+        ui.label("Local port");
+        ui.text_edit_singleline(&mut self.ssh_local_port);
+        ui.label("Remote port");
+        ui.text_edit_singleline(&mut self.ssh_remote_port);
+        ui.horizontal(|ui| {
+            if ui.button("Start Tunnel").clicked() {
+                self.cfg.ssh_tunnel_host = self.ssh_host.clone();
+                self.cfg.ssh_tunnel_user = self.ssh_user.clone();
+                self.cfg.ssh_tunnel_local_port = self.ssh_local_port.parse().unwrap_or(8500);
+                self.cfg.ssh_tunnel_remote_port = self.ssh_remote_port.parse().unwrap_or(8500);
+                self.cfg.ssh_tunnel_enabled = self.ssh_enabled;
+                match self.tunnel.start(&self.cfg) {
+                    Ok(_) => self.status = format!("SSH tunnel: {}", self.tunnel.status),
+                    Err(e) => self.status = format!("SSH tunnel failed: {}", e),
+                }
+            }
+            if ui.button("Stop Tunnel").clicked() {
+                self.tunnel.stop();
+                self.status = format!("SSH tunnel: {}", self.tunnel.status);
+            }
+            let st = self.tunnel.status.clone();
+            let running = self.tunnel.is_running();
+            ui.label(format!("Status: {} (running={})", st, running));
+        });
         if ui.button("Save").clicked() {
             self.cfg.hangar_url = self.hangar_url.clone();
             self.cfg.stt_base_url = self.stt_base.clone();
             self.cfg.chat_base_url = self.chat_base.clone();
+            self.cfg.ssh_tunnel_enabled = self.ssh_enabled;
+            self.cfg.ssh_tunnel_host = self.ssh_host.clone();
+            self.cfg.ssh_tunnel_user = self.ssh_user.clone();
+            self.cfg.ssh_tunnel_local_port = self.ssh_local_port.parse().unwrap_or(8500);
+            self.cfg.ssh_tunnel_remote_port = self.ssh_remote_port.parse().unwrap_or(8500);
             let _ = self.cfg.save();
             self.status = "Settings saved".into();
         }

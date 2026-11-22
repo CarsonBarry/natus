@@ -1,6 +1,12 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
+fn default_true() -> bool { true }
+fn default_ssh_host() -> String { "carsons-mac-mini".to_string() }
+fn default_ssh_user() -> String { "carson".to_string() }
+fn default_ssh_local_port() -> u16 { 8500 }
+fn default_ssh_remote_port() -> u16 { 8500 }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     pub data_dir: PathBuf,
@@ -13,6 +19,16 @@ pub struct Config {
     pub chat_model: String,
     pub filler_words: Vec<String>,
     pub screenshot_dir_name: String,
+    #[serde(default = "default_true")]
+    pub ssh_tunnel_enabled: bool,
+    #[serde(default = "default_ssh_host")]
+    pub ssh_tunnel_host: String,
+    #[serde(default = "default_ssh_user")]
+    pub ssh_tunnel_user: String,
+    #[serde(default = "default_ssh_local_port")]
+    pub ssh_tunnel_local_port: u16,
+    #[serde(default = "default_ssh_remote_port")]
+    pub ssh_tunnel_remote_port: u16,
 }
 
 impl Default for Config {
@@ -26,14 +42,19 @@ impl Default for Config {
             hangar_client_id: "default".to_string(),
             hangar_api_key: None,
             stt_base_url: "http://127.0.0.1:8080".to_string(),
-            stt_model: "mlx-community/parakeet-tdt-0.6b-v3".to_string(),
+            stt_model: "transcribe".to_string(),
             chat_base_url: "http://127.0.0.1:8090".to_string(),
-            chat_model: "mlx-community--Qwen3.6-35B-A3B-OptiQ-4bit".to_string(),
+            chat_model: "flagship".to_string(),
             filler_words: vec![
                 "um".into(), "uh".into(), "like".into(), "you know".into(),
                 "i mean".into(), "sort of".into(), "kind of".into(), "basically".into(),
             ],
             screenshot_dir_name: "screenshots".to_string(),
+            ssh_tunnel_enabled: true,
+            ssh_tunnel_host: "carsons-mac-mini".to_string(),
+            ssh_tunnel_user: "carson".to_string(),
+            ssh_tunnel_local_port: 8500,
+            ssh_tunnel_remote_port: 8500,
         }
     }
 }

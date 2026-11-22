@@ -8,11 +8,12 @@ mod llm;
 mod screenshot;
 mod stt;
 mod storage;
+mod tunnel;
 mod voice_commands;
 
 use app::NatusApp;
 use config::Config;
-use global_hotkey::{hotkey::HotKey, GlobalHotKeyManager, GlobalHotKeyEvent};
+use global_hotkey::{hotkey::HotKey, GlobalHotKeyManager};
 use std::sync::Arc;
 use tokio::runtime::Runtime;
 
