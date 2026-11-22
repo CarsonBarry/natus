@@ -62,6 +62,12 @@ impl NatusApp {
 
 impl eframe::App for NatusApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Poll global hotkey events for quick capture.
+        if let Ok(ev) = global_hotkey::GlobalHotKeyEvent::receiver().try_recv() {
+            let _ = ev;
+            self.do_capture();
+            self.status = "Hotkey capture".into();
+        }
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.selectable_value(&mut self.tab, Tab::Record, "Record");
