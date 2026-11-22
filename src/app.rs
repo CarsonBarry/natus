@@ -36,8 +36,12 @@ pub struct NatusApp {
     summary: String,
     // settings fields
     hangar_url: String,
+    stt_model: String,
+    chat_model: String,
     stt_base: String,
     chat_base: String,
+    hangar_status: String,
+    discovered: Vec<(String, String)>,
     ssh_enabled: bool,
     ssh_host: String,
     ssh_user: String,
@@ -53,6 +57,8 @@ impl NatusApp {
     pub fn new(cfg: Config, rt: Arc<Runtime>) -> Self {
         let commands = voice_commands::default_commands();
         let hangar_url = cfg.hangar_url.clone();
+        let stt_model = cfg.stt_model.clone();
+        let chat_model = cfg.chat_model.clone();
         let stt_base = cfg.stt_base_url.clone();
         let chat_base = cfg.chat_base_url.clone();
         let ssh_enabled = cfg.ssh_tunnel_enabled;
@@ -71,7 +77,8 @@ impl NatusApp {
             commands, new_cmd_phrase: String::new(),
             tab: Tab::Record, status: "Ready".into(), review_index: 0,
             transcript: String::new(), summary: String::new(),
-            hangar_url, stt_base, chat_base,
+            hangar_url, stt_model, chat_model, stt_base, chat_base,
+            hangar_status: "Not checked".into(), discovered: vec![],
             ssh_enabled, ssh_host, ssh_user, ssh_local_port, ssh_remote_port, tunnel,
         }
     }
@@ -331,9 +338,72 @@ impl NatusApp {
         ui.heading("Settings");
         ui.label("Hangar URL");
         ui.text_edit_singleline(&mut self.hangar_url);
-        ui.label("STT base URL");
+        ui.horizontal(|ui| {
+            if ui.button("Test Hangar Connection").clicked() {
+                let url = self.hangar_url.trim_end_matches('/').to_string();
+                let rt = Arc::clone(&self.rt);
+                let res = rt.block_on(async {
+                    let client = reqwest::Client::new();
+                    match client.get(format!("{}/v1/models", url)).send().await {
+                        Ok(resp) if resp.status().is_success() => {
+                            let v: serde_json::Value = resp.json().await.unwrap_or_default();
+                            let mut found = vec![];
+                            if let Some(data) = v["data"].as_array() {
+                                for m in data {
+                                    let id = m["id"].as_str().unwrap_or("").to_string();
+                                    let kind = m["hangar"]["kind"].as_str().unwrap_or("model").to_string();
+                                    found.push((id, kind));
+                                }
+                            }
+                            Ok(found)
+                        }
+                        Ok(resp) => Err(format!("HTTP {}", resp.status())),
+                        Err(e) => Err(format!("Error: {}", e)),
+                    }
+                });
+                match res {
+                    Ok(found) => {
+                        self.discovered = found;
+                        self.hangar_status = format!("Connected ({} models)", self.discovered.len());
+                    }
+                    Err(e) => self.hangar_status = e,
+                }
+            }
+            ui.label(&self.hangar_status);
+        });
+        ui.label("STT model / route");
+        ui.text_edit_singleline(&mut self.stt_model);
+        if !self.discovered.is_empty() {
+            egui::ComboBox::from_label("Pick STT route")
+                .selected_text(&self.stt_model)
+                .show_ui(ui, |ui| {
+                    for (id, kind) in &self.discovered {
+                        if kind == "stt" {
+                            if ui.selectable_label(self.stt_model == *id, id).clicked() {
+                                self.stt_model = id.clone();
+                            }
+                        }
+                    }
+                });
+        }
+        ui.label("Chat model / route");
+        ui.text_edit_singleline(&mut self.chat_model);
+        if !self.discovered.is_empty() {
+            egui::ComboBox::from_label("Pick chat route")
+                .selected_text(&self.chat_model)
+                .show_ui(ui, |ui| {
+                    for (id, kind) in &self.discovered {
+                        if kind == "chat" {
+                            if ui.selectable_label(self.chat_model == *id, id).clicked() {
+                                self.chat_model = id.clone();
+                            }
+                        }
+                    }
+                });
+        }
+        ui.label("STT base URL (fallback)");
         ui.text_edit_singleline(&mut self.stt_base);
-        ui.label("Chat base URL");
+        ui.label("Chat base URL (fallback)");
         ui.text_edit_singleline(&mut self.chat_base);
         ui.separator();
         ui.heading("SSH tunnel to Hangar (Tailscale)");
@@ -368,6 +438,8 @@ impl NatusApp {
         });
         if ui.button("Save").clicked() {
             self.cfg.hangar_url = self.hangar_url.clone();
+            self.cfg.stt_model = self.stt_model.clone();
+            self.cfg.chat_model = self.chat_model.clone();
             self.cfg.stt_base_url = self.stt_base.clone();
             self.cfg.chat_base_url = self.chat_base.clone();
             self.cfg.ssh_tunnel_enabled = self.ssh_enabled;
