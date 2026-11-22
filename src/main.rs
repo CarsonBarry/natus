@@ -8,6 +8,7 @@ mod llm;
 mod screenshot;
 mod stt;
 mod storage;
+mod theme;
 mod tunnel;
 mod voice_commands;
 
@@ -34,6 +35,9 @@ fn main() -> eframe::Result<()> {
     eframe::run_native(
         "Natus",
         options,
-        Box::new(|_cc| Ok(Box::new(NatusApp::new(cfg, rt)))),
+        Box::new(|cc| {
+            theme::apply(&cc.egui_ctx, theme::palette(true));
+            Ok(Box::new(NatusApp::new(cfg, rt)))
+        }),
     )
 }

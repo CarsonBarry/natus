@@ -2,6 +2,7 @@ use crate::audio::Recorder;
 use crate::clicks::{ClickRecorder, ClickSequence};
 use crate::config::Config;
 use crate::filler::remove_fillers;
+use crate::theme;
 use crate::tunnel;
 use crate::screenshot;
 use crate::storage::{CaptureEntry, Session};
@@ -94,11 +95,19 @@ impl eframe::App for NatusApp {
         }
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.selectable_value(&mut self.tab, Tab::Record, "Record");
-                ui.selectable_value(&mut self.tab, Tab::Review, "Review");
-                ui.selectable_value(&mut self.tab, Tab::Commands, "Voice Commands");
-                ui.selectable_value(&mut self.tab, Tab::Clicks, "Click Sequences");
-                ui.selectable_value(&mut self.tab, Tab::Settings, "Settings");
+                ui.heading("Natus");
+                ui.separator();
+                for (t, label) in [(Tab::Record, "Record"), (Tab::Review, "Review"), (Tab::Commands, "Commands"), (Tab::Clicks, "Clicks"), (Tab::Settings, "Settings")] {
+                    if ui.selectable_label(self.tab == t, label).clicked() {
+                        self.tab = t;
+                    }
+                }
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let p = theme::pal(ui.ctx());
+                    let running = self.tunnel.is_running();
+                    let color = if running { p.teal } else { p.warn };
+                    ui.colored_label(color, if running { "Tunnel: connected" } else { "Tunnel: offline" });
+                });
             });
         });
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -111,7 +120,8 @@ impl eframe::App for NatusApp {
             }
         });
         egui::TopBottomPanel::bottom("status").show(ctx, |ui| {
-            ui.label(&self.status);
+            let p = theme::pal(ui.ctx());
+            ui.colored_label(p.dim, &self.status);
         });
     }
 }
@@ -119,6 +129,8 @@ impl eframe::App for NatusApp {
 impl NatusApp {
     fn ui_record(&mut self, ui: &mut egui::Ui) {
         ui.heading("Recording & Capture");
+        ui.label("Create a session, record audio, capture screenshots, then transcribe and summarize.");
+        ui.separator();
         if self.session.is_none() {
             if ui.button("New Session").clicked() {
                 self.session = Some(Session::new("Feedback session"));
