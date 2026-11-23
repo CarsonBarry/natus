@@ -1,0 +1,6 @@
+#!/bin/sh
+# Committed local CI hook. Enable once per clone:
+#   git config core.hooksPath .githooks
+set -eu
+repo=$(git rev-parse --show-toplevel)
+exec sh "$repo/scripts/ci.sh"
