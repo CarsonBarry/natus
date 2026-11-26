@@ -6,8 +6,8 @@ mod filler;
 mod hangar;
 mod llm;
 mod screenshot;
-mod stt;
 mod storage;
+mod stt;
 mod theme;
 mod tunnel;
 mod voice_commands;
@@ -25,7 +25,12 @@ fn main() -> eframe::Result<()> {
 
     // Register a global hotkey for quick capture (Ctrl+Shift+C).
     if let Ok(mgr) = GlobalHotKeyManager::new() {
-        let hk = HotKey::new(Some(global_hotkey::hotkey::Modifiers::CONTROL | global_hotkey::hotkey::Modifiers::SHIFT), global_hotkey::hotkey::Code::KeyC);
+        let hk = HotKey::new(
+            Some(
+                global_hotkey::hotkey::Modifiers::CONTROL | global_hotkey::hotkey::Modifiers::SHIFT,
+            ),
+            global_hotkey::hotkey::Code::KeyC,
+        );
         let _ = mgr.register(hk);
         // keep manager alive for process lifetime
         std::mem::forget(mgr);

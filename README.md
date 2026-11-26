@@ -25,6 +25,51 @@ cargo build --release
 cargo run
 ```
 
+## Installer
+
+Natus is packaged with [cargo-packager](https://github.com/crabnebula-dev/cargo-packager)
+(NSIS on Windows). Install the tooling once:
+
+```sh
+cargo install cargo-packager --locked
+```
+
+Windows also needs [NSIS](https://nsis.sourceforge.io/) (`makensis`) on `PATH`.
+
+Build an installer:
+
+```sh
+# Windows
+cargo packager --release --formats nsis
+# macOS
+cargo packager --release --formats dmg
+# Linux
+cargo packager --release --formats deb
+```
+
+The Windows installer lands at `target/release/natus_<version>_x64-setup.exe`
+and installs Natus into `Program Files` with a Start Menu entry and an
+uninstaller. `scripts/build-win.bat` runs both the build and the packaging step.
+
+## Double-click scripts
+
+`scripts/` contains a build and a launch script for each OS. Each one changes to the
+repository root before running, so they work from wherever you double-click them.
+
+| OS | Build | Launch |
+| --- | --- | --- |
+| Windows | `scripts/build-win.bat` | `scripts/launch-win.bat` |
+| macOS | `scripts/build-mac.command` | `scripts/launch-mac.command` |
+| Linux | `scripts/build-linux.sh` | `scripts/launch-linux.sh` |
+
+Both launch scripts build a release binary first if one does not exist yet, then run
+`target/release/natus` (`natus.exe` on Windows).
+
+- **macOS**: `.command` files open in Terminal when double-clicked. If Finder doesn't
+  open them, run `chmod +x scripts/*.command` once.
+- **Linux**: make the `.sh` files executable with `chmod +x scripts/*.sh`. Some file
+  managers (e.g. GNOME Files) need you to right-click → *Allow Launching* the first time.
+
 ## Configuration
 
 Config lives in `~/.config/natus/config.json` (or platform equivalent). Defaults point at the local hangar (`http://127.0.0.1:8500`), parakeet STT, and the flagship chat model.

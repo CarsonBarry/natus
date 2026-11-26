@@ -1,11 +1,21 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-fn default_true() -> bool { true }
-fn default_ssh_host() -> String { "carsons-mac-mini".to_string() }
-fn default_ssh_user() -> String { "carson".to_string() }
-fn default_ssh_local_port() -> u16 { 8500 }
-fn default_ssh_remote_port() -> u16 { 8500 }
+fn default_true() -> bool {
+    true
+}
+fn default_ssh_host() -> String {
+    "carsons-mac-mini".to_string()
+}
+fn default_ssh_user() -> String {
+    "carson".to_string()
+}
+fn default_ssh_local_port() -> u16 {
+    8500
+}
+fn default_ssh_remote_port() -> u16 {
+    8500
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
@@ -46,8 +56,14 @@ impl Default for Config {
             chat_base_url: "http://127.0.0.1:8090".to_string(),
             chat_model: "flagship".to_string(),
             filler_words: vec![
-                "um".into(), "uh".into(), "like".into(), "you know".into(),
-                "i mean".into(), "sort of".into(), "kind of".into(), "basically".into(),
+                "um".into(),
+                "uh".into(),
+                "like".into(),
+                "you know".into(),
+                "i mean".into(),
+                "sort of".into(),
+                "kind of".into(),
+                "basically".into(),
             ],
             screenshot_dir_name: "screenshots".to_string(),
             ssh_tunnel_enabled: true,
@@ -61,7 +77,10 @@ impl Default for Config {
 
 impl Config {
     pub fn load() -> Self {
-        let path = dirs::config_dir().unwrap_or_default().join("natus").join("config.json");
+        let path = dirs::config_dir()
+            .unwrap_or_default()
+            .join("natus")
+            .join("config.json");
         if path.exists() {
             if let Ok(s) = std::fs::read_to_string(&path) {
                 if let Ok(c) = serde_json::from_str(&s) {

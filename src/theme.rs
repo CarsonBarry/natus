@@ -64,7 +64,11 @@ pub fn palette(dark: bool) -> Palette {
 
 pub fn apply(ctx: &egui::Context, p: Palette) {
     ctx.data_mut(|d| d.insert_temp(egui::Id::NULL, p));
-    let mut v = if p.dark { egui::Visuals::dark() } else { egui::Visuals::light() };
+    let mut v = if p.dark {
+        egui::Visuals::dark()
+    } else {
+        egui::Visuals::light()
+    };
     v.panel_fill = p.panel;
     v.window_fill = p.panel;
     v.extreme_bg_color = p.bg;
@@ -116,16 +120,29 @@ pub fn apply(ctx: &egui::Context, p: Palette) {
         s.spacing.scroll.bar_width = 6.0;
         s.spacing.scroll.floating = true;
         s.text_styles = [
-            (TextStyle::Heading, FontId::new(17.0, FontFamily::Proportional)),
+            (
+                TextStyle::Heading,
+                FontId::new(17.0, FontFamily::Proportional),
+            ),
             (TextStyle::Body, FontId::new(13.5, FontFamily::Proportional)),
-            (TextStyle::Button, FontId::new(13.0, FontFamily::Proportional)),
-            (TextStyle::Small, FontId::new(11.5, FontFamily::Proportional)),
-            (TextStyle::Monospace, FontId::new(12.5, FontFamily::Monospace)),
+            (
+                TextStyle::Button,
+                FontId::new(13.0, FontFamily::Proportional),
+            ),
+            (
+                TextStyle::Small,
+                FontId::new(11.5, FontFamily::Proportional),
+            ),
+            (
+                TextStyle::Monospace,
+                FontId::new(12.5, FontFamily::Monospace),
+            ),
         ]
         .into();
     });
 }
 
 pub fn pal(ctx: &egui::Context) -> Palette {
-    ctx.data(|d| d.get_temp::<Palette>(egui::Id::NULL)).unwrap_or_else(|| palette(true))
+    ctx.data(|d| d.get_temp::<Palette>(egui::Id::NULL))
+        .unwrap_or_else(|| palette(true))
 }

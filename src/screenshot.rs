@@ -3,7 +3,10 @@ use xcap::Monitor;
 
 pub fn capture_primary(path: PathBuf) -> anyhow::Result<PathBuf> {
     let monitors = Monitor::all()?;
-    let mon = monitors.into_iter().next().ok_or_else(|| anyhow::anyhow!("no monitor"))?;
+    let mon = monitors
+        .into_iter()
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("no monitor"))?;
     let img = mon.capture_image()?;
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)?;

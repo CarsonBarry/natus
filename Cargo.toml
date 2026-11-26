@@ -38,3 +38,9 @@ lto = true
 [[bin]]
 name = "natus"
 path = "src/main.rs"
+
+[package.metadata.packager]
+product_name = "Natus"
+identifier = "com.carsonbarry.natus"
+out_dir = "target/release"
+nsis = { installer_mode = "perMachine" }

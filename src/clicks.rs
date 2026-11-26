@@ -40,12 +40,23 @@ impl ClickRecorder {
         let running = Arc::clone(&self.running);
         std::thread::spawn(move || {
             let cb = move |e: Event| {
-                if !*running.lock().unwrap() { return; }
+                if !*running.lock().unwrap() {
+                    return;
+                }
                 if let EventType::ButtonPress(_) = e.event_type {
                     let now = Instant::now();
-                    let delay = last.lock().unwrap().map(|l| now.duration_since(l).as_millis() as u64).unwrap_or(0);
+                    let delay = last
+                        .lock()
+                        .unwrap()
+                        .map(|l| now.duration_since(l).as_millis() as u64)
+                        .unwrap_or(0);
                     *last.lock().unwrap() = Some(now);
-                    events.lock().unwrap().push(ClickEvent { x: 0, y: 0, delay_ms: delay, button: "left".into() });
+                    events.lock().unwrap().push(ClickEvent {
+                        x: 0,
+                        y: 0,
+                        delay_ms: delay,
+                        button: "left".into(),
+                    });
                 }
             };
             let _ = listen(cb);
@@ -55,7 +66,10 @@ impl ClickRecorder {
         *self.running.lock().unwrap() = false;
         let ev = self.events.lock().unwrap().clone();
         self.events.lock().unwrap().clear();
-        ClickSequence { name: format!("seq_{}", chrono::Utc::now().timestamp()), events: ev }
+        ClickSequence {
+            name: format!("seq_{}", chrono::Utc::now().timestamp()),
+            events: ev,
+        }
     }
 }
 

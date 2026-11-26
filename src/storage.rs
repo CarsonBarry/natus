@@ -49,12 +49,17 @@ impl Session {
     }
     pub fn list(cfg: &Config) -> Vec<String> {
         let root = cfg.data_dir.join("sessions");
-        if !root.exists() { return vec![]; }
-        std::fs::read_dir(root).ok().map(|rd| {
-            rd.filter_map(|e| e.ok())
-                .filter(|e| e.path().join("session.json").exists())
-                .map(|e| e.file_name().to_string_lossy().to_string())
-                .collect()
-        }).unwrap_or_default()
+        if !root.exists() {
+            return vec![];
+        }
+        std::fs::read_dir(root)
+            .ok()
+            .map(|rd| {
+                rd.filter_map(|e| e.ok())
+                    .filter(|e| e.path().join("session.json").exists())
+                    .map(|e| e.file_name().to_string_lossy().to_string())
+                    .collect()
+            })
+            .unwrap_or_default()
     }
 }

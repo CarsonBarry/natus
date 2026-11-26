@@ -8,7 +8,10 @@ pub struct SshTunnel {
 
 impl SshTunnel {
     pub fn new() -> Self {
-        Self { child: None, status: "Stopped".into() }
+        Self {
+            child: None,
+            status: "Stopped".into(),
+        }
     }
 
     pub fn start(&mut self, cfg: &Config) -> anyhow::Result<()> {

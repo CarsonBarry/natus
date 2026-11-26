@@ -1,3 +1,6 @@
-# Local CI is POSIX sh: pin LF so the same committed files run under Git Bash on Windows.
+# Scripts: Windows batch files need CRLF; POSIX/macOS scripts need LF.
 .githooks/pre-push text eol=lf
 scripts/ci.sh text eol=lf
+scripts/*.bat text eol=crlf
+scripts/*.command text eol=lf
+scripts/*.sh text eol=lf
